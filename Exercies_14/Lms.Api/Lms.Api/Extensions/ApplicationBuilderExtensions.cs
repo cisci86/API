@@ -29,10 +29,13 @@ namespace Lms.Api.Extensions
         }
         private static async Task SeedData()
         {
-            var courses = GetCourses();
-            await _context.AddRangeAsync(courses);
+            if (_context == null)
+            {
+                var courses = GetCourses();
+                await _context.AddRangeAsync(courses);
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+            }
         }
         private static IEnumerable<Course> GetCourses()
         {
