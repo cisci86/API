@@ -6,17 +6,9 @@ using System.Threading.Tasks;
 
 namespace Lms.Core.Dto
 {
-    public class ModuleDto
+    public class CourseCreateDto
     {
         public string Title { get; set; }
         public DateTime StartDate { get; set; }
-        private DateTime endDate;
-
-        public DateTime EndDate
-        {
-            get { return StartDate.AddMonths(1); }
-            set { endDate = value; }
-        }
-
     }
 }
