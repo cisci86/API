@@ -12,9 +12,11 @@ namespace Lms.Core.Entities
         [Key]
         public int Id { get; set; }
         [Required]
+        [MaxLength(150)]
         public string Title { get; set; }
         [Required]
         public DateTime StartDate { get; set; }
+        [Required]
         public int CourseId { get; set; }
     }
 }

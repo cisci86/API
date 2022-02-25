@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
 using Lms.Core.Entities;
+using AutoMapper;
+using Lms.Core.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Lms.Api.Controllers
 {
@@ -16,73 +19,85 @@ namespace Lms.Api.Controllers
     public class ModulesController : ControllerBase
     {
         private readonly LmsApiContext _context;
+        private readonly IMapper _mapper;
 
-        public ModulesController(LmsApiContext context)
+
+        public ModulesController(LmsApiContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Modules
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Module>>> GetModule()
+        public async Task<ActionResult<IEnumerable<ModuleDto>>> GetModule()
         {
-            return await _context.Module.ToListAsync();
+            var modelDto = _mapper.ProjectTo<ModuleDto>(_context.Module);
+            return await modelDto.ToListAsync();
         }
 
         // GET: api/Modules/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Module>> GetModule(int id)
+        public async Task<ActionResult<ModuleDto>> GetModule(int id)
         {
-            var @module = await _context.Module.FindAsync(id);
+            var module = await _context.Module.FindAsync(id);
 
-            if (@module == null)
+            if (module == null)
             {
                 return NotFound();
             }
 
-            return @module;
+            return _mapper.Map<ModuleDto>(module);
         }
 
         // PUT: api/Modules/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutModule(int id, Module @module)
+        public async Task<IActionResult> PutModule(int id, ModuleModifyDto module)
         {
-            if (id != @module.Id)
+            var moduleToUpdate = await _context.Module.FindAsync(id);
+            
+            if (moduleToUpdate == null)
             {
-                return BadRequest();
+                return NotFound();
             }
+            if (!ModelState.IsValid)
+            {
+                BadRequest();
+            }
+            _mapper.Map(module, moduleToUpdate);
 
-            _context.Entry(@module).State = EntityState.Modified;
+            _context.SaveChanges();
 
-            try
+
+            return Ok();
+        }
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchModule(int id, JsonPatchDocument<ModuleModifyDto> patchDocument)
+        {
+            var moduleToUpdate = await _context.Module.FindAsync(id);
+            if (moduleToUpdate == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ModuleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var moduleToPatch = _mapper.Map<ModuleModifyDto>(moduleToUpdate);
+            patchDocument.ApplyTo(moduleToPatch);
+            _mapper.Map(moduleToPatch, moduleToUpdate);
+            _context.SaveChanges();
 
             return NoContent();
         }
-
         // POST: api/Modules
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Module>> PostModule(Module @module)
+        public async Task<ActionResult<Module>> PostModule(ModuleCreateDto moduleCreateDto)
         {
-            _context.Module.Add(@module);
+            var module = _mapper.Map<Module>(moduleCreateDto);
+            _context.Module.Add(module);
             await _context.SaveChangesAsync();
+            var moduleDto = _mapper.Map<ModuleDto>(module);
 
-            return CreatedAtAction("GetModule", new { id = @module.Id }, @module);
+            return CreatedAtAction("GetModule", new { id = module.Id }, moduleDto);
         }
 
         // DELETE: api/Modules/5

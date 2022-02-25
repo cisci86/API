@@ -1,13 +1,11 @@
 ﻿#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
 using Lms.Core.Entities;
+using AutoMapper;
+using Lms.Core.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Lms.Api.Controllers
 {
@@ -16,22 +14,25 @@ namespace Lms.Api.Controllers
     public class CoursesController : ControllerBase
     {
         private readonly LmsApiContext _context;
+        private readonly IMapper _mapper;
 
-        public CoursesController(LmsApiContext context)
+        public CoursesController(LmsApiContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourse()
         {
-            return await _context.Course.ToListAsync();
+            var coursesDto = _mapper.ProjectTo<CourseDto>(_context.Course);
+            return await coursesDto.ToListAsync();
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<CourseDto>> GetCourse(int id)
         {
             var course = await _context.Course.FindAsync(id);
 
@@ -40,50 +41,52 @@ namespace Lms.Api.Controllers
                 return NotFound();
             }
 
-            return course;
+            return _mapper.Map<CourseDto>(course);
         }
 
         // PUT: api/Courses/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCourse(int id, Course course)
+        public async Task<IActionResult> PutCourse(int id, CourseModifyDto course)
         {
-            if (id != course.Id)
+            var courseToUpdate = await _context.Course.FindAsync(id);
+            if (courseToUpdate == null)
             {
-                return BadRequest();
+                return NotFound();
             }
+            _mapper.Map(course, courseToUpdate);
+            
+            _context.SaveChanges();
+           
 
-            _context.Entry(course).State = EntityState.Modified;
-
-            try
+            return NoContent();
+        }
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchCourse(int id, JsonPatchDocument<CourseModifyDto> patchDocument)
+        {
+            var courseToUpdate = await _context.Course.FindAsync(id);
+            if (courseToUpdate == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CourseExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            var courseToPatch = _mapper.Map<CourseModifyDto>(courseToUpdate);
+            patchDocument.ApplyTo(courseToPatch);
+            _mapper.Map(courseToPatch, courseToUpdate);
+            _context.SaveChanges();
+           
             return NoContent();
         }
 
         // POST: api/Courses
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Course>> PostCourse(Course course)
+        public async Task<ActionResult<Course>> PostCourse(CourseCreateDto courseCreateDto)
         {
-            
+            var course = _mapper.Map<Course>(courseCreateDto);
             _context.Course.Add(course);
             await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCourse", new { id = course.Id }, course);
+            var courseDto = _mapper.Map<CourseDto>(course);
+            return CreatedAtAction("GetCourse", new { id = course.Id }, courseDto);
         }
 
         // DELETE: api/Courses/5
