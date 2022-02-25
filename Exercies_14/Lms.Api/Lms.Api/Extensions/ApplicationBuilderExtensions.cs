@@ -29,7 +29,7 @@ namespace Lms.Api.Extensions
         }
         private static async Task SeedData()
         {
-            if (_context.Course.Any())
+            if (!_context.Course.Any())
             {
                 var courses = GetCourses();
                 await _context.AddRangeAsync(courses);
