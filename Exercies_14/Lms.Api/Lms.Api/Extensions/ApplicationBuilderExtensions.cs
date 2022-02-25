@@ -6,7 +6,7 @@ namespace Lms.Api.Extensions
 {
     public static class ApplicationBuilderExtensions
     {
-        private static Faker faker = new Faker("sv");
+        private static Faker faker = new Faker();
         private static LmsApiContext _context = null;
         public static async Task<IApplicationBuilder> SeedDataAsync(this IApplicationBuilder app)
         {
@@ -29,13 +29,15 @@ namespace Lms.Api.Extensions
         }
         private static async Task SeedData()
         {
-            if (_context == null)
+            if (_context.Course.Any())
             {
                 var courses = GetCourses();
                 await _context.AddRangeAsync(courses);
 
                 await _context.SaveChangesAsync();
             }
+            
+            
         }
         private static IEnumerable<Course> GetCourses()
         {
@@ -46,7 +48,7 @@ namespace Lms.Api.Extensions
                 {
                     //Id = i + 1,
                     Title = faker.Commerce.Categories(1).First(),
-                    StartDate = faker.Date.Past(1),
+                    StartDate = (faker.Date.Past(1)).Date,
                     Modules = GetModules()
                 };
                 courses.Add(course);
@@ -61,8 +63,8 @@ namespace Lms.Api.Extensions
             {
                 var module = new Module
                 {
-                    Title = faker.Commerce.Product(),
-                    StartDate = faker.Date.Past(1),
+                    Title = faker.Company.CatchPhrase(),
+                    StartDate = (faker.Date.Past(1)).Date,
                 };
                 modules.Add(module);
             }
