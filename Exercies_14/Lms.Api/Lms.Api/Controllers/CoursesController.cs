@@ -24,10 +24,15 @@ namespace Lms.Api.Controllers
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<CoursesWithModulesDto>>> GetCourse(bool withModules)
         {
-            var coursesDto = _mapper.ProjectTo<CourseDto>(_context.Course);
-            return await coursesDto.ToListAsync();
+            if (!withModules)
+            {
+                var courses = _context.Course.ToList();
+                return Ok(_mapper.Map<IEnumerable<CoursesWithModulesDto>>(courses));
+            }
+            var coursesDtoMapped =  _mapper.ProjectTo<CoursesWithModulesDto>(_context.Course);
+            return Ok(await coursesDtoMapped.ToListAsync());
         }
 
         // GET: api/Courses/5
@@ -55,9 +60,21 @@ namespace Lms.Api.Controllers
                 return NotFound();
             }
             _mapper.Map(course, courseToUpdate);
-            
-            _context.SaveChanges();
-           
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500);
+
+            }
 
             return NoContent();
         }
@@ -70,11 +87,24 @@ namespace Lms.Api.Controllers
                 return NotFound();
             }
             var courseToPatch = _mapper.Map<CourseModifyDto>(courseToUpdate);
-            patchDocument.ApplyTo(courseToPatch);
+            patchDocument.ApplyTo(courseToPatch, ModelState);
+
+            if (!TryValidateModel(courseToPatch)) return BadRequest(ModelState);
+
             _mapper.Map(courseToPatch, courseToUpdate);
-            _context.SaveChanges();
-           
-            return NoContent();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500);
+
+            }
+
+            return Ok(_mapper.Map<CourseDto>(courseToUpdate));
         }
 
         // POST: api/Courses
@@ -82,9 +112,24 @@ namespace Lms.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Course>> PostCourse(CourseCreateDto courseCreateDto)
         {
+            
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
             var course = _mapper.Map<Course>(courseCreateDto);
             _context.Course.Add(course);
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500);
+
+            }
             var courseDto = _mapper.Map<CourseDto>(course);
             return CreatedAtAction("GetCourse", new { id = course.Id }, courseDto);
         }
@@ -100,14 +145,18 @@ namespace Lms.Api.Controllers
             }
 
             _context.Course.Remove(course);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500);
+
+            }
 
             return NoContent();
-        }
-
-        private bool CourseExists(int id)
-        {
-            return _context.Course.Any(e => e.Id == id);
         }
     }
 }
