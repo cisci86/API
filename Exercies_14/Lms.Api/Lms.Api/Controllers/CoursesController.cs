@@ -59,12 +59,8 @@ namespace Lms.Api.Controllers
             {
                 return NotFound();
             }
+            if (!TryValidateModel(course)) return BadRequest(ModelState);
             _mapper.Map(course, courseToUpdate);
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
             try
             {
                 await _context.SaveChangesAsync();
