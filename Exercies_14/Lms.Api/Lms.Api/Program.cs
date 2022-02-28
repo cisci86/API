@@ -2,9 +2,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Lms.Data.Data;
 using Lms.Api.Extensions;
+using Lms.Data.Data.Services;
+using Lms.Core.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddScoped<IRepository<Course>, CourseRepository>();
+builder.Services.AddScoped<IRepository<Module>, ModuleRepository>();
 builder.Services.AddDbContext<LmsApiContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LmsApiContext")));
 

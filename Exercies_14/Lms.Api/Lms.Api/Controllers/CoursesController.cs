@@ -6,6 +6,7 @@ using Lms.Core.Entities;
 using AutoMapper;
 using Lms.Core.Dto;
 using Microsoft.AspNetCore.JsonPatch;
+using Lms.Data.Data.Services;
 
 namespace Lms.Api.Controllers
 {
@@ -15,11 +16,13 @@ namespace Lms.Api.Controllers
     {
         private readonly LmsApiContext _context;
         private readonly IMapper _mapper;
+        private readonly IRepository<Course> repository;
 
-        public CoursesController(LmsApiContext context, IMapper mapper)
+        public CoursesController(LmsApiContext context, IMapper mapper, IRepository<Course> repository)
         {
             _context = context;
             _mapper = mapper;
+            this.repository = repository;
         }
 
         // GET: api/Courses
@@ -114,18 +117,18 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
             var course = _mapper.Map<Course>(courseCreateDto);
-            _context.Course.Add(course);
-
+            
+            repository.Add(course);
             try
             {
-                await _context.SaveChangesAsync();
-
+                repository.Save();
             }
             catch (DbUpdateException)
             {
-                return StatusCode(500);
 
+                return StatusCode(500);
             }
+            
             var courseDto = _mapper.Map<CourseDto>(course);
             return CreatedAtAction("GetCourse", new { id = course.Id }, courseDto);
         }

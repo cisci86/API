@@ -3,6 +3,7 @@ using AutoMapper;
 using Lms.Core.Dto;
 using Lms.Core.Entities;
 using Lms.Data.Data;
+using Lms.Data.Data.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,13 @@ namespace Lms.Api.Controllers
     {
         private readonly LmsApiContext _context;
         private readonly IMapper _mapper;
+        private readonly IRepository<Module> _repository;
 
-
-        public ModulesController(LmsApiContext context, IMapper mapper)
+        public ModulesController(LmsApiContext context, IMapper mapper, IRepository<Module> repository)
         {
             _context = context;
             _mapper = mapper;
+            _repository = repository;
         }
 
         // GET: api/Modules
@@ -110,11 +112,11 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Module.Add(module);
-
+            _repository.Add(module);
+            //Vet inte om detta är nödvändigt då jag får ett 500 även utan den om man t.ex försöker spara ett modul utan ett CoursId eller ett som inte finns
             try
             {
-                await _context.SaveChangesAsync();
+                _repository.Save();
 
             }
             catch (DbUpdateException)
