@@ -35,14 +35,13 @@ namespace Lms.Api.Controllers
         [HttpGet("{title}")]
         public async Task<ActionResult<ModuleDto>> GetModule(string title)
         {
-            var module = await _context.Module.FirstOrDefaultAsync(m => m.Title == title);
-
+            var module = await _mapper.ProjectTo<ModuleDto>(_context.Module)
+                                .FirstOrDefaultAsync(m => m.Title == title);
             if (module == null)
             {
                 return NotFound();
             }
-
-            return _mapper.Map<ModuleDto>(module);
+            return Ok(module);
         }
 
         // PUT: api/Modules/5
@@ -56,26 +55,21 @@ namespace Lms.Api.Controllers
             {
                 return NotFound();
             }
+            if (!TryValidateModel(module)) return BadRequest(ModelState);
 
             _mapper.Map(module, moduleToUpdate);
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
             try
             {
                 await _context.SaveChangesAsync();
 
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 return StatusCode(500);
 
             }
-
-
-            return Ok();
+             return Ok();
         }
         [HttpPatch("{id}")]
         public async Task<IActionResult> PatchModule(int id, JsonPatchDocument<ModuleModifyDto> patchDocument)
@@ -87,17 +81,17 @@ namespace Lms.Api.Controllers
             }
             var moduleToPatch = _mapper.Map<ModuleModifyDto>(moduleToUpdate);
             patchDocument.ApplyTo(moduleToPatch);
+
+            if (!TryValidateModel(moduleToPatch)) return BadRequest(ModelState);
+
             _mapper.Map(moduleToPatch, moduleToUpdate);
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
+            
             try
             {
                 await _context.SaveChangesAsync();
 
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 return StatusCode(500);
 
@@ -123,11 +117,11 @@ namespace Lms.Api.Controllers
                 await _context.SaveChangesAsync();
 
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 return StatusCode(500);
 
-            }   
+            }
 
             var moduleDto = _mapper.Map<ModuleDto>(module);
 
@@ -150,7 +144,7 @@ namespace Lms.Api.Controllers
                 await _context.SaveChangesAsync();
 
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 return StatusCode(500);
 
