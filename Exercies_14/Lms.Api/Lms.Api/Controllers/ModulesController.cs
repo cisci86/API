@@ -1,16 +1,11 @@
 ﻿#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Lms.Data.Data;
-using Lms.Core.Entities;
 using AutoMapper;
 using Lms.Core.Dto;
+using Lms.Core.Entities;
+using Lms.Data.Data;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lms.Api.Controllers
 {
@@ -37,10 +32,10 @@ namespace Lms.Api.Controllers
         }
 
         // GET: api/Modules/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ModuleDto>> GetModule(int id)
+        [HttpGet("{title}")]
+        public async Task<ActionResult<ModuleDto>> GetModule(string title)
         {
-            var module = await _context.Module.FindAsync(id);
+            var module = await _context.Module.FirstOrDefaultAsync(m => m.Title == title);
 
             if (module == null)
             {
@@ -56,18 +51,28 @@ namespace Lms.Api.Controllers
         public async Task<IActionResult> PutModule(int id, ModuleModifyDto module)
         {
             var moduleToUpdate = await _context.Module.FindAsync(id);
-            
+
             if (moduleToUpdate == null)
             {
                 return NotFound();
             }
-            if (!ModelState.IsValid)
-            {
-                BadRequest();
-            }
+
             _mapper.Map(module, moduleToUpdate);
 
-            _context.SaveChanges();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500);
+
+            }
 
 
             return Ok();
@@ -83,9 +88,22 @@ namespace Lms.Api.Controllers
             var moduleToPatch = _mapper.Map<ModuleModifyDto>(moduleToUpdate);
             patchDocument.ApplyTo(moduleToPatch);
             _mapper.Map(moduleToPatch, moduleToUpdate);
-            _context.SaveChanges();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            try
+            {
+                await _context.SaveChangesAsync();
 
-            return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500);
+
+            }
+
+            return Ok();
         }
         // POST: api/Modules
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -93,8 +111,24 @@ namespace Lms.Api.Controllers
         public async Task<ActionResult<Module>> PostModule(ModuleCreateDto moduleCreateDto)
         {
             var module = _mapper.Map<Module>(moduleCreateDto);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             _context.Module.Add(module);
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500);
+
+            }   
+
             var moduleDto = _mapper.Map<ModuleDto>(module);
 
             return CreatedAtAction("GetModule", new { id = module.Id }, moduleDto);
@@ -111,14 +145,17 @@ namespace Lms.Api.Controllers
             }
 
             _context.Module.Remove(@module);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500);
 
-        private bool ModuleExists(int id)
-        {
-            return _context.Module.Any(e => e.Id == id);
+            }
+            return Ok();
         }
     }
 }
