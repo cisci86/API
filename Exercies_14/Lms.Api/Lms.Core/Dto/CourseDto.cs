@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Lms.Core.Dto
 {
     public class CourseDto
     {
+        [Required]
+        [MaxLength(100)]
         public string Title { get; set; }
         public DateTime StartDate { get; set; }
         private DateTime endDate;
