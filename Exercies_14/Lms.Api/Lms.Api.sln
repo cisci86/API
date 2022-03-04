@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lms.Core", "Lms.Core\Lms.Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lms.Data", "Lms.Data\Lms.Data.csproj", "{8643713F-4529-4CF4-A977-374DB6875F14}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lms.Client", "Lms.Client\Lms.Client.csproj", "{E82F25F5-752B-4F5A-90F7-2F28162FD073}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{8643713F-4529-4CF4-A977-374DB6875F14}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8643713F-4529-4CF4-A977-374DB6875F14}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8643713F-4529-4CF4-A977-374DB6875F14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E82F25F5-752B-4F5A-90F7-2F28162FD073}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E82F25F5-752B-4F5A-90F7-2F28162FD073}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E82F25F5-752B-4F5A-90F7-2F28162FD073}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E82F25F5-752B-4F5A-90F7-2F28162FD073}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
