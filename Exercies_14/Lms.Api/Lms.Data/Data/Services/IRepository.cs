@@ -1,10 +1,14 @@
-﻿using Lms.Core.Entities;
-
+﻿
 namespace Lms.Data.Data.Services
 {
-    public interface IRepository<T>
+    public interface IRepository<T> where T : class
     {
-        void Add(T item);
-        bool Save();
+        T Add(T entity);
+        void Delete(T id);
+        IQueryable<T> GetAll();
+        Task<T> GetAsync(int id);
+        Task<T> GetAsync(string id);
+        void SaveChangesAsync();
+        T Update(T entity);
     }
 }

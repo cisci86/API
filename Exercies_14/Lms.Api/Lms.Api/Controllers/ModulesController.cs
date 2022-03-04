@@ -14,22 +14,21 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
-        private readonly LmsApiContext _context;
         private readonly IMapper _mapper;
-        private readonly IRepository<Module> _repository;
+        private readonly IUnitOfWork unitOfWork;
 
-        public ModulesController(LmsApiContext context, IMapper mapper, IRepository<Module> repository)
+        public ModulesController(IMapper mapper, IUnitOfWork unitOfWork)
         {
-            _context = context;
+
             _mapper = mapper;
-            _repository = repository;
+            this.unitOfWork = unitOfWork;
         }
 
         // GET: api/Modules
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ModuleDto>>> GetModule()
         {
-            var modelDto = _mapper.ProjectTo<ModuleDto>(_context.Module);
+            var modelDto = _mapper.ProjectTo<ModuleDto>(unitOfWork.ModuleRepository.GetAll());
             return await modelDto.ToListAsync();
         }
 
@@ -37,7 +36,7 @@ namespace Lms.Api.Controllers
         [HttpGet("{title}")]
         public async Task<ActionResult<ModuleDto>> GetModule(string title)
         {
-            var module = await _mapper.ProjectTo<ModuleDto>(_context.Module)
+            var module = await _mapper.ProjectTo<ModuleDto>(unitOfWork.ModuleRepository.GetAll())
                                 .FirstOrDefaultAsync(m => m.Title == title);
             if (module == null)
             {
@@ -51,7 +50,7 @@ namespace Lms.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutModule(int id, ModuleModifyDto module)
         {
-            var moduleToUpdate = await _context.Module.FindAsync(id);
+            var moduleToUpdate = await unitOfWork.ModuleRepository.GetAsync(id);
 
             if (moduleToUpdate == null)
             {
@@ -63,7 +62,7 @@ namespace Lms.Api.Controllers
 
             try
             {
-                await _context.SaveChangesAsync();
+                await unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)
@@ -76,7 +75,7 @@ namespace Lms.Api.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> PatchModule(int id, JsonPatchDocument<ModuleModifyDto> patchDocument)
         {
-            var moduleToUpdate = await _context.Module.FindAsync(id);
+            var moduleToUpdate = await unitOfWork.ModuleRepository.GetAsync(id);
             if (moduleToUpdate == null)
             {
                 return NotFound();
@@ -90,7 +89,7 @@ namespace Lms.Api.Controllers
             
             try
             {
-                await _context.SaveChangesAsync();
+                await unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)
@@ -112,11 +111,11 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            _repository.Add(module);
-            //Vet inte om detta är nödvändigt då jag får ett 500 även utan den om man t.ex försöker spara ett modul utan ett CoursId eller ett som inte finns
+            unitOfWork.ModuleRepository.Add(module);
+
             try
             {
-                _repository.Save();
+               await unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)
@@ -134,16 +133,16 @@ namespace Lms.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteModule(int id)
         {
-            var @module = await _context.Module.FindAsync(id);
-            if (@module == null)
+            var module = await unitOfWork.ModuleRepository.GetAsync(id);
+            if (module == null)
             {
                 return NotFound();
             }
 
-            _context.Module.Remove(@module);
+            unitOfWork.ModuleRepository.Delete(module);
             try
             {
-                await _context.SaveChangesAsync();
+                await unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)

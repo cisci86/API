@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lms.Data.Migrations
 {
     [DbContext(typeof(LmsApiContext))]
-    [Migration("20220225133355_AddedAnnotations")]
-    partial class AddedAnnotations
+    [Migration("20220304130704_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

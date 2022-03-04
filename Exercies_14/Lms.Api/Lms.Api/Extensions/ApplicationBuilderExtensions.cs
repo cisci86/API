@@ -48,7 +48,7 @@ namespace Lms.Api.Extensions
                 {
                     //Id = i + 1,
                     Title = faker.Commerce.Categories(1).First(),
-                    StartDate = (faker.Date.Past(1)).Date,
+                    StartDate = (faker.Date.Past(1)),
                     Modules = GetModules()
                 };
                 courses.Add(course);
@@ -64,7 +64,7 @@ namespace Lms.Api.Extensions
                 var module = new Module
                 {
                     Title = faker.Company.CatchPhrase(),
-                    StartDate = (faker.Date.Past(1)).Date,
+                    StartDate = (faker.Date.Past(1))
                 };
                 modules.Add(module);
             }

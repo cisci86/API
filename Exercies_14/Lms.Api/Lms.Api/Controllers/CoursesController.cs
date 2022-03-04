@@ -14,15 +14,14 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class CoursesController : ControllerBase
     {
-        private readonly LmsApiContext _context;
         private readonly IMapper _mapper;
-        private readonly IRepository<Course> repository;
+        private readonly IUnitOfWork unitOfWork;
 
-        public CoursesController(LmsApiContext context, IMapper mapper, IRepository<Course> repository)
+        public CoursesController(IMapper mapper, IUnitOfWork unitOfWork)
         {
-            _context = context;
+          
             _mapper = mapper;
-            this.repository = repository;
+            this.unitOfWork = unitOfWork;
         }
 
         // GET: api/Courses
@@ -31,10 +30,10 @@ namespace Lms.Api.Controllers
         {
             if (!withModules)
             {
-                var courses = _context.Course.ToList();
+                var courses = unitOfWork.CourseRepository.GetAll();
                 return Ok(_mapper.Map<IEnumerable<CoursesWithModulesDto>>(courses));
             }
-            var coursesDtoMapped =  _mapper.ProjectTo<CoursesWithModulesDto>(_context.Course);
+            var coursesDtoMapped =  _mapper.ProjectTo<CoursesWithModulesDto>(unitOfWork.CourseRepository.GetAll());
             return Ok(await coursesDtoMapped.ToListAsync());
         }
 
@@ -42,7 +41,7 @@ namespace Lms.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CourseDto>> GetCourse(int id)
         {
-            var course = await _context.Course.FindAsync(id);
+            var course = await unitOfWork.CourseRepository.GetAsync(id);
 
             if (course == null)
             {
@@ -57,16 +56,20 @@ namespace Lms.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCourse(int id, CourseModifyDto course)
         {
-            var courseToUpdate = await _context.Course.FindAsync(id);
+            var courseToUpdate = await unitOfWork.CourseRepository.GetAsync(id);
+
             if (courseToUpdate == null)
             {
                 return NotFound();
             }
+
             if (!TryValidateModel(course)) return BadRequest(ModelState);
+
             _mapper.Map(course, courseToUpdate);
+
             try
             {
-                await _context.SaveChangesAsync();
+                unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)
@@ -75,12 +78,12 @@ namespace Lms.Api.Controllers
 
             }
 
-            return NoContent();
+            return Ok();
         }
         [HttpPatch("{id}")]
         public async Task<IActionResult> PatchCourse(int id, JsonPatchDocument<CourseModifyDto> patchDocument)
         {
-            var courseToUpdate = await _context.Course.FindAsync(id);
+            var courseToUpdate = await unitOfWork.CourseRepository.GetAsync(id);
             if (courseToUpdate == null)
             {
                 return NotFound();
@@ -94,7 +97,7 @@ namespace Lms.Api.Controllers
 
             try
             {
-                await _context.SaveChangesAsync();
+               unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)
@@ -116,12 +119,11 @@ namespace Lms.Api.Controllers
             {
                 return BadRequest();
             }
-            var course = _mapper.Map<Course>(courseCreateDto);
+            var course = unitOfWork.CourseRepository.Add(_mapper.Map<Course>(courseCreateDto));
             
-            repository.Add(course);
             try
             {
-                repository.Save();
+                unitOfWork.SaveChangesAsync();
             }
             catch (DbUpdateException)
             {
@@ -137,16 +139,16 @@ namespace Lms.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
-            var course = await _context.Course.FindAsync(id);
+            var course = await unitOfWork.CourseRepository.GetAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
 
-            _context.Course.Remove(course);
+            unitOfWork.CourseRepository.Delete(course);
             try
             {
-                await _context.SaveChangesAsync();
+                unitOfWork.SaveChangesAsync();
 
             }
             catch (DbUpdateException)

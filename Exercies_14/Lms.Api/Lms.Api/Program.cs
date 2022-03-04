@@ -8,6 +8,7 @@ using Lms.Core.Entities;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IRepository<Course>, CourseRepository>();
 builder.Services.AddScoped<IRepository<Module>, ModuleRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddDbContext<LmsApiContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LmsApiContext")));
 

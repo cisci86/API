@@ -7,22 +7,12 @@ using System.Threading.Tasks;
 
 namespace Lms.Data.Data.Services
 {
-    public class ModuleRepository : IRepository<Module>
+    public class ModuleRepository : GenericRepository<Module>
     {
-        public readonly LmsApiContext _context;
-        public ModuleRepository(LmsApiContext context)
+       
+        public ModuleRepository(LmsApiContext context) : base(context)
         {
-            _context = context;
-        }
-
-        public void Add(Module module)
-        {
-           _context.Module.Add(module);
-        }
-
-        public bool Save()
-        {
-            return (_context.SaveChanges() >= 0);
+            
         }
     }
 }
